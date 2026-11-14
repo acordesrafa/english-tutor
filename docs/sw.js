@@ -1,4 +1,4 @@
-const CACHE = "english-tutor-v3";
+const CACHE = "english-tutor-v4";
 const ASSETS = ["/", "/index.html", "/style.css", "/app.js", "/manifest.json"];
 
 self.addEventListener("install", e => {
@@ -8,7 +8,7 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
   );
   self.clients.claim();
 });
@@ -24,13 +24,14 @@ self.addEventListener("fetch", e => {
       url.pathname.startsWith("/warmup")) {
     return; // network only
   }
+  // Network-first for everything else (always get fresh code when online)
   e.respondWith(
-    caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+    fetch(e.request).then(resp => {
       if (resp && resp.status === 200 && resp.type === "basic") {
         const clone = resp.clone();
         caches.open(CACHE).then(c => c.put(e.request, clone));
       }
       return resp;
-    }).catch(() => cached))
+    }).catch(() => caches.match(e.request))
   );
 });
