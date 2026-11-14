@@ -1,0 +1,20 @@
+# English Tutor Local - ignore unnecessary files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info
+dist/
+build/
+*.log
+*.wav
+debug_last.wav
+node_modules/
+.DS_Store
+Thumbs.db
+*.zip
+data/
+.env
+*.db

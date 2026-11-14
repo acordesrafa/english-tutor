@@ -1,0 +1,17 @@
+{
+  "appId": "com.englishtutor.local",
+  "appName": "English Tutor Local",
+  "webDir": "frontend",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#0b1220"
+    }
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}

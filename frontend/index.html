@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Tutor Local</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <h1>English Tutor Local</h1>
+      <div class="topbar-right">
+        <select id="serverSelect" class="select" title="Servidor">
+          <option value="">🏠 Local (esta PC)</option>
+          <option value="http://192.168.1.7:8000">🏠 Casa (LAN)</option>
+          <option value="groq">☁️ Groq (gratis, 70B)</option>
+          <option value="cloud">☁️ Nube (URL propia)</option>
+        </select>
+        <input id="groqKey" type="password" placeholder="API key de Groq" style="display:none;width:160px;" />
+        <input id="cloudUrl" type="url" placeholder="https://tu-servidor.com" style="display:none;width:160px;" />
+        <button id="applyServerBtn" class="btn" style="display:none;">Aplicar</button>
+        <div id="status" class="status">Comprobando backend...</div>
+        <button id="retryBtn" class="btn" style="display:none;">🔄 Reintentar</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left: Conversation -->
+      <section class="panel">
+        <h2>Conversación</h2>
+        <div id="chat" class="chat"></div>
+        <div class="controls">
+          <select id="micSelect" class="select"></select>
+          <button id="recordBtn" class="btn primary">🎤 Hablar</button>
+          <button id="stopBtn" class="btn" disabled>⏹</button>
+          <button id="replayBtn" class="btn" disabled>🔁</button>
+          <button id="browserSttBtn" class="btn">🗣️ Navegador</button>
+        </div>
+        <div class="text-input">
+          <input id="textInput" type="text" placeholder="Escribe en inglés..." />
+          <button id="sendBtn" class="btn">Enviar</button>
+        </div>
+        <div class="options">
+          <label><input type="checkbox" id="showTranscript" /> Transcripción</label>
+          <label><input type="checkbox" id="immersionMode" checked /> Inmersión</label>
+          <label><input type="checkbox" id="slowAudio" /> Audio lento</label>
+          <label><input type="checkbox" id="audioOnly" /> Solo audio</label>
+        </div>
+        <div class="settings">
+          <label>Nivel:
+            <select id="levelSelect">
+              <option value="beginner">Principiante</option>
+              <option value="intermediate">Intermedio</option>
+              <option value="advanced">Avanzado</option>
+            </select>
+          </label>
+          <label>Tema:
+            <select id="topicSelect">
+              <option value="daily life">Vida diaria</option>
+              <option value="travel">Viajes</option>
+              <option value="work">Trabajo</option>
+              <option value="food">Comida</option>
+              <option value="health">Salud</option>
+              <option value="sports">Deportes</option>
+              <option value="technology">Tecnología</option>
+              <option value="shopping">Compras</option>
+              <option value="weather">Clima</option>
+              <option value="family">Familia</option>
+              <option value="hobbies">Pasatiempos</option>
+              <option value="education">Educación</option>
+              <option value="music">Música</option>
+              <option value="movies">Películas</option>
+              <option value="nature">Naturaleza</option>
+              <option value="city">Ciudad</option>
+              <option value="home">Hogar</option>
+              <option value="friends">Amigos</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <!-- Right: Practice -->
+      <section class="panel">
+        <h2>Práctica</h2>
+
+        <div class="block">
+          <div class="block-title">Ejercicio de escucha</div>
+          <div class="row">
+            <button id="exerciseBtn" class="btn primary">🎧 Nuevo</button>
+            <button id="personalizedBtn" class="btn">🎯 Personalizado</button>
+            <button id="replayExerciseBtn" class="btn" disabled>🔁</button>
+          </div>
+          <div id="exerciseQuestion" class="question"></div>
+          <div id="exerciseText" class="text" style="display:none;"></div>
+          <div class="row">
+            <input id="answerInput" type="text" placeholder="Tu respuesta..." />
+            <button id="checkBtn" class="btn">Comprobar</button>
+          </div>
+          <div id="exerciseFeedback" class="feedback"></div>
+        </div>
+
+        <div class="block">
+          <div class="block-title">Dictado</div>
+          <div class="row">
+            <button id="dictationBtn" class="btn primary">📝 Nuevo</button>
+            <button id="replayDictationBtn" class="btn" disabled>🔁</button>
+          </div>
+          <div id="dictationQuestion" class="question"></div>
+          <div class="row">
+            <input id="dictationInput" type="text" placeholder="Escribe lo que oyes..." />
+            <button id="checkDictationBtn" class="btn">Comprobar</button>
+          </div>
+          <div id="dictationFeedback" class="feedback"></div>
+        </div>
+
+        <div class="block">
+          <div class="block-title">Shadowing</div>
+          <div class="row">
+            <button id="shadowingBtn" class="btn primary">🗣️ Nuevo</button>
+            <button id="replayShadowingBtn" class="btn" disabled>🔁</button>
+          </div>
+          <div id="shadowingTarget" class="question"></div>
+          <div id="shadowingText" class="text" style="display:none;"></div>
+          <div class="row">
+            <button id="shadowRecordBtn" class="btn">🎤 Grabar</button>
+            <button id="shadowStopBtn" class="btn" disabled>⏹</button>
+          </div>
+          <div id="shadowingFeedback" class="feedback"></div>
+        </div>
+
+        <div class="block">
+          <div class="block-title">Rellenar huecos</div>
+          <div class="row">
+            <button id="fillblankBtn" class="btn primary">✏️ Nuevo</button>
+          </div>
+          <div id="fillblankSentence" class="question"></div>
+          <div class="row">
+            <input id="fillblankInput" type="text" placeholder="Palabra que falta..." />
+            <button id="checkFillblankBtn" class="btn">Comprobar</button>
+          </div>
+          <div id="fillblankFeedback" class="feedback"></div>
+        </div>
+
+        <div class="block">
+          <div class="block-title">Progreso</div>
+          <div class="row">
+            <button id="progressBtn" class="btn">📊 Ver</button>
+          </div>
+          <div id="progressSummary" class="feedback"></div>
+          <canvas id="progressChart" width="320" height="180" style="width:100%;max-width:320px;background:#0f172a;border-radius:6px;display:none;"></canvas>
+          <canvas id="progressLine" width="320" height="160" style="width:100%;max-width:320px;background:#0f172a;border-radius:6px;display:none;margin-top:6px;"></canvas>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

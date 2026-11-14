@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9
+requests>=2.31
+faster-whisper>=1.0.0
+piper-tts>=1.2.0
+sqlalchemy>=2.0
+pydantic>=2.0

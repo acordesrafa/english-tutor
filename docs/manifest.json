@@ -1,0 +1,14 @@
+{
+  "name": "English Tutor Local",
+  "short_name": "EnglishTutor",
+  "description": "Tutor de inglés local: conversación, dictado, shadowing y más.",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0b1220",
+  "theme_color": "#0b1220",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
