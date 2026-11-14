@@ -16,6 +16,15 @@ function isGroqMode() { return BACKEND === "groq"; }
 
 function getGroqKey() { return localStorage.getItem("groq_api_key") || ""; }
 
+
+function safeJson(r) {
+  return r.text().then(t => {
+    try { return JSON.parse(t); }
+    catch (e) { throw new Error("El servidor devolvio una respuesta no-JSON (" + r.status + "). Verifica que el backend este corriendo y la URL sea correcta."); }
+  });
+}
+
+
 const GROQ_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3-32b", "openai/gpt-oss-20b"];
 async function groqChat(messages) {
   const apiKey = getGroqKey();
@@ -27,10 +36,22 @@ async function groqChat(messages) {
         headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
         body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 300 })
       });
-      const d = await r.json();
-      if (d.error) { lastErr = new Error(d.error.message || "Groq error"); continue; }
+      const rawText = await r.text();
+      let d;
+      try { d = JSON.parse(rawText); }
+      catch (e) {
+        lastErr = new Error("Groq devolvio respuesta no-JSON (" + r.status + "). Reintenta en unos segundos.");
+        continue;
+      }
+      if (!r.ok || (d && d.error)) {
+        const msg = (d && d.error && (d.error.message || d.error)) || ("HTTP " + r.status);
+        lastErr = new Error(msg);
+        if (d.error && /model|access|not found|does not exist/i.test(msg)) continue;
+        throw lastErr;
+      }
+      if (!d.choices || !d.choices[0]) { lastErr = new Error("Respuesta vacia de Groq"); continue; }
       return d.choices[0].message.content;
-    } catch (e) { lastErr = e; }
+    } catch (e) { lastErr = e; if (e && e.message && /no-JSON/i.test(e.message)) continue; }
   }
   throw lastErr || new Error("All Groq models failed");
 }
@@ -50,8 +71,10 @@ async function groqSTT(audioBlob) {
     headers: { "Authorization": "Bearer " + apiKey },
     body: form
   });
-  const d = await r.json();
-  if (d.error) throw new Error(d.error.message || "Groq STT error");
+  const rawText = await r.text();
+  let d;
+  try { d = JSON.parse(rawText); } catch (e) { throw new Error("Groq STT devolvio respuesta no-JSON (" + r.status + ")"); }
+  if (!r.ok || (d && d.error)) throw new Error((d && d.error && (d.error.message || d.error)) || ("HTTP " + r.status));
   return d.text || "";
 }
 
@@ -243,7 +266,7 @@ async function checkHealth() {
       return;
     }
     const r = await fetch(BACKEND + "/health");
-    const d = await r.json();
+    const d = await safeJson(r);
     if (retryBtn) retryBtn.style.display = "none";
     if (!_modelWarmed) {
       statusEl.textContent = `Backend OK | Cargando modelo...`;
@@ -308,7 +331,7 @@ async function sendText(text) {
       form.append("text", text);
       form.append("session_id", "default");
       const r = await fetch(BACKEND + "/chat", { method: "POST", body: form });
-      const d = await r.json();
+      const d = await safeJson(r);
       reply = d.reply || "[sin respuesta]";
     }
     thinking.remove();
@@ -340,7 +363,7 @@ async function speak(text) {
     form.append("text", text);
     const r = await fetch(BACKEND + "/tts", { method: "POST", body: form });
     if (!r.ok) {
-      const d = await r.json();
+      const d = await safeJson(r);
       console.warn("TTS no disponible:", d.error);
       return;
     }
@@ -414,7 +437,7 @@ stopBtn.onclick = async () => {
       const form = new FormData();
       form.append("audio", blob, "recording.wav");
       const r = await fetch(BACKEND + "/stt", { method: "POST", body: form });
-      const d = await r.json();
+      const d = await safeJson(r);
       if (d.error) {
         addMsg("assistant", "STT no disponible: " + d.error);
         return;
@@ -474,7 +497,7 @@ async function newExercise() {
       form.append("level", getLevel());
       form.append("topic", getTopic());
       const r = await fetch(BACKEND + "/exercise", { method: "POST", body: form });
-      d = await r.json();
+      d = await safeJson(r);
     }
     currentExercise = { text: d.text, question: d.question };
     exerciseQuestion.textContent = "Pregunta: " + d.question;
@@ -499,7 +522,7 @@ async function checkAnswer() {
       form.append("question", currentExercise.question);
       form.append("answer", ans);
       const r = await fetch(BACKEND + "/check", { method: "POST", body: form });
-      const d = await r.json();
+      const d = await safeJson(r);
       feedback = d.feedback || "[sin feedback]";
     }
     exerciseFeedback.textContent = feedback;
@@ -551,7 +574,7 @@ async function newDictation() {
       form.append("level", getLevel());
       form.append("topic", getTopic());
       const r = await fetch(BACKEND + "/dictation", { method: "POST", body: form });
-      const d = await r.json();
+      const d = await safeJson(r);
       text = d.text;
     }
     currentDictation = text;
@@ -594,7 +617,7 @@ async function newShadowing() {
       form.append("level", getLevel());
       form.append("topic", getTopic());
       const r = await fetch(BACKEND + "/exercise", { method: "POST", body: form });
-      const d = await r.json();
+      const d = await safeJson(r);
       text = d.text;
     }
     currentShadowing = text;
@@ -655,7 +678,7 @@ shadowStopBtn.onclick = async () => {
   form.append("audio", blob, "shadow.wav");
   try {
     const r = await fetch(BACKEND + "/stt", { method: "POST", body: form });
-    const d = await r.json();
+    const d = await safeJson(r);
     if (d.error) {
       shadowingFeedback.textContent = "STT no disponible: " + d.error;
       return;
@@ -702,7 +725,7 @@ async function showProgress() {
       d = groqProgressSummary();
     } else {
       const r = await fetch(BACKEND + "/progress_summary?session_id=default");
-      d = await r.json();
+      d = await safeJson(r);
     }
     const canvas = document.getElementById("progressChart");
     const ctx = canvas.getContext("2d");
@@ -859,7 +882,7 @@ personalizedBtn.onclick = async () => {
       form.append("level", getLevel());
       form.append("topic", getTopic());
       const r = await fetch(BACKEND + "/personalized", { method: "POST", body: form });
-      d = await r.json();
+      d = await safeJson(r);
     }
     currentExercise = { text: d.text, question: d.question };
     const audioOnly = document.getElementById("audioOnly").checked;
@@ -895,7 +918,7 @@ async function newFillblank() {
       form.append("level", getLevel());
       form.append("topic", getTopic());
       const r = await fetch(BACKEND + "/fillblank", { method: "POST", body: form });
-      d = await r.json();
+      d = await safeJson(r);
     }
     currentFillblankAnswer = d.answer;
     fillblankSentence.textContent = d.sentence;
