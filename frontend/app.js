@@ -16,16 +16,23 @@ function isGroqMode() { return BACKEND === "groq"; }
 
 function getGroqKey() { return localStorage.getItem("groq_api_key") || ""; }
 
+const GROQ_MODELS = ["openai/gpt-oss-120b", "qwen/qwen3-32b", "openai/gpt-oss-20b"];
 async function groqChat(messages) {
   const apiKey = getGroqKey();
-  const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages, temperature: 0.7, max_tokens: 300 })
-  });
-  const d = await r.json();
-  if (d.error) throw new Error(d.error.message || "Groq error");
-  return d.choices[0].message.content;
+  let lastErr = null;
+  for (const model of GROQ_MODELS) {
+    try {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 300 })
+      });
+      const d = await r.json();
+      if (d.error) { lastErr = new Error(d.error.message || "Groq error"); continue; }
+      return d.choices[0].message.content;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error("All Groq models failed");
 }
 
 async function groqGenerate(prompt) {
@@ -228,7 +235,7 @@ async function checkHealth() {
       });
       if (r.ok) {
         if (retryBtn) retryBtn.style.display = "none";
-        statusEl.textContent = "Groq OK | LLM: Llama 3.3 70B | STT: Whisper V3";
+        statusEl.textContent = "Groq OK | LLM: GPT-OSS 120B (con fallback) | STT: Whisper V3";
       } else {
         statusEl.textContent = "Groq: API key inválida o sin conexión.";
         if (retryBtn) retryBtn.style.display = "inline-block";
