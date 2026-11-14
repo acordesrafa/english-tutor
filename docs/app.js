@@ -1,3 +1,20 @@
+// Force-update: clear stale caches if version mismatch
+(function() {
+  const V = "v4";
+  if (localStorage.getItem("app_version") !== V) {
+    localStorage.setItem("app_version", V);
+    if ("caches" in window) {
+      caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).then(() => {
+        if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage("skipWaiting");
+        }
+        window.location.reload();
+      });
+    } else {
+      window.location.reload();
+    }
+  }
+})();
 let BACKEND = localStorage.getItem("backend_url") || "";
 
 // ===== Groq mode helpers =====
