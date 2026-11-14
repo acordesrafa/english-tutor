@@ -691,23 +691,37 @@ shadowStopBtn.onclick = async () => {
   shadowRecordBtn.disabled = false;
   shadowStopBtn.disabled = true;
 
-  const form = new FormData();
-  form.append("audio", blob, "shadow.wav");
   try {
-    const r = await fetch(BACKEND + "/stt", { method: "POST", body: form });
-    const d = await safeJson(r);
-    if (d.error) {
-      shadowingFeedback.textContent = "STT no disponible: " + d.error;
-      return;
+    let transcript = "";
+    if (isGroqMode()) {
+      transcript = await groqSTT(blob);
+    } else {
+      const form = new FormData();
+      form.append("audio", blob, "shadow.wav");
+      const r = await fetch(BACKEND + "/stt", { method: "POST", body: form });
+      const d = await safeJson(r);
+      if (d.error) {
+        shadowingFeedback.textContent = "STT no disponible: " + d.error;
+        return;
+      }
+      transcript = d.text || "";
     }
-    const transcript = d.text || "";
-    const f2 = new FormData();
-    f2.append("target", currentShadowing);
-    f2.append("transcript", transcript);
-    const r2 = await fetch(BACKEND + "/shadowing_check", { method: "POST", body: f2 });
-    const d2 = await r2.json();
-    shadowingFeedback.textContent = d2.feedback + "\nTu transcripción: " + transcript;
-    await saveProgress("shadowing", d2.score, currentShadowing);
+    // Compute similarity score client-side
+    const a = (currentShadowing || "").toLowerCase().replace(/[^a-z ]/g, "").split(/\s+/).filter(Boolean);
+    const b = (transcript || "").toLowerCase().replace(/[^a-z ]/g, "").split(/\s+/).filter(Boolean);
+    let matches = 0;
+    const used = new Set();
+    for (const w of b) {
+      const idx = a.findIndex((x, i) => x === w && !used.has(i));
+      if (idx >= 0) { matches++; used.add(idx); }
+    }
+    const score = a.length ? Math.round((matches / a.length) * 100) : 0;
+    let feedback = "";
+    if (score >= 90) feedback = "Excelente pronunciación.";
+    else if (score >= 70) feedback = "Bien, pero puedes mejorar.";
+    else feedback = "Sigue practicando.";
+    shadowingFeedback.textContent = feedback + "\nTu transcripción: " + transcript + "\nPuntaje: " + score + "%";
+    await saveProgress("shadowing", score, currentShadowing);
     shadowingText.style.display = "block";
     shadowingText.textContent = "Texto objetivo: " + currentShadowing;
   } catch (e) {
