@@ -2,7 +2,7 @@
   "name": "English Tutor Local",
   "short_name": "EnglishTutor",
   "description": "Tutor de inglés local: conversación, dictado, shadowing y más.",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0b1220",
   "theme_color": "#0b1220",
