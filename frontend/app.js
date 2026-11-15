@@ -1,6 +1,6 @@
 // Force-update: clear stale caches if version mismatch
 (function() {
-  const V = "v4";
+  const V = "v5";
   if (localStorage.getItem("app_version") !== V) {
     localStorage.setItem("app_version", V);
     if ("caches" in window) {
@@ -18,16 +18,23 @@
 let BACKEND = localStorage.getItem("backend_url") || "";
 
 // ===== Groq mode helpers =====
-const TUTOR_PROMPT = `You are a friendly native English conversation partner.
+function getTutorPrompt() {
+  const level = (typeof getLevel === "function" ? getLevel() : "") || "intermediate";
+  const topic = (typeof getTopic === "function" ? getTopic() : "") || "technology";
+  return `You are a friendly native English conversation partner.
 The student is a Spanish speaker learning English.
 Speak naturally, like a native speaker, in clear standard English.
+The conversation topic is: ${topic} (level: ${level}).
+Stay on this topic and, when relevant, role-play real-world institutions and contexts (school, work, hospital, bank, store, airport, etc.) related to the topic.
 After the student speaks:
 - First answer naturally.
 - If they made an important pronunciation or grammar mistake, briefly correct it in a kind way.
+- If the student asks you to translate something to Spanish, provide the Spanish translation clearly.
 - Keep your reply to 1-3 short sentences.
 - End with one short follow-up question.
 Do not use markdown, lists, or long explanations.
-Always answer in English.`;
+Always answer in English (except when giving a Spanish translation).`;
+}
 
 function isGroqMode() { return BACKEND === "groq"; }
 
@@ -336,13 +343,24 @@ async function sendText(text) {
   try {
     let reply = "";
     if (isGroqMode()) {
-      // Build history from recent messages
       const history = [];
-      // (simplified: no history in Groq mode for now)
-      reply = await groqChat([
-        { role: "system", content: TUTOR_PROMPT },
-        { role: "user", content: text }
-      ]);
+      const msgs = chatEl.querySelectorAll(".msg");
+      const recent = Array.from(msgs).slice(-6);
+      for (const m of recent) {
+        const label = m.querySelector(".label");
+        const body = m.querySelector("div:nth-child(2)");
+        if (!label || !body) continue;
+        const role = (label.textContent || "").trim() === "Tú" ? "user" : "assistant";
+        const content = (body.textContent || "").trim();
+        if (content && content !== "Procesando...") history.push({ role, content });
+      }
+      if (history.length && history[history.length-1].role === "user" && history[history.length-1].content === text.trim()) {
+        history.pop();
+      }
+      const messages = [{ role: "system", content: getTutorPrompt() }];
+      messages.push(...history);
+      messages.push({ role: "user", content: text });
+      reply = await groqChat(messages);
     } else {
       const form = new FormData();
       form.append("text", text);
@@ -1053,7 +1071,7 @@ if (retryBtn) {
 // Register PWA service worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=4").catch(err => console.warn("SW register failed", err));
+    navigator.serviceWorker.register("./sw.js?v=5").catch(err => console.warn("SW register failed", err));
   });
 }
 
