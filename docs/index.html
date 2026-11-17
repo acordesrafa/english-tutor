@@ -47,7 +47,13 @@
         <div class="options">
           <label><input type="checkbox" id="showTranscript" /> Transcripción</label>
           <label><input type="checkbox" id="immersionMode" checked /> Inmersión</label>
-          <label><input type="checkbox" id="slowAudio" /> Audio lento</label>
+          <label>Velocidad:
+            <select id="speedSelect" class="select">
+              <option value="0.8">Lento</option>
+              <option value="1.0" selected>Intermedio</option>
+              <option value="1.2">Rápido</option>
+            </select>
+          </label>
           <label><input type="checkbox" id="audioOnly" /> Solo audio</label>
         </div>
         <div class="settings">
@@ -165,6 +171,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=10"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>

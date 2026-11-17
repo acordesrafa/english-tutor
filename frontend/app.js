@@ -1,6 +1,6 @@
 // Force-update: clear stale caches if version mismatch
 (function() {
-  const V = "v10";
+  const V = "v11";
   if (localStorage.getItem("app_version") !== V) {
     localStorage.setItem("app_version", V);
     if ("caches" in window) {
@@ -107,7 +107,7 @@ function groqSpeak(text) {
   speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = "en-US";
-  utterance.rate = slowAudio.checked ? 0.9 : 1.0;
+  utterance.rate = getPlaybackRate();
   const voices = speechSynthesis.getVoices();
   const enVoice = voices.find(v => v.lang.startsWith("en")) || voices.find(v => v.lang.startsWith("en-"));
   if (enVoice) utterance.voice = enVoice;
@@ -244,7 +244,8 @@ const replayBtn = document.getElementById("replayBtn");
 const textInput = document.getElementById("textInput");
 const sendBtn = document.getElementById("sendBtn");
 const showTranscript = document.getElementById("showTranscript");
-const slowAudio = document.getElementById("slowAudio");
+const speedSelect = document.getElementById("speedSelect");
+function getPlaybackRate() { return parseFloat(speedSelect.value) || 1.0; }
 
 let audioContext = null;
 let mediaStream = null;
@@ -413,7 +414,7 @@ async function speak(text) {
     if (currentAudio) { try { currentAudio.pause(); } catch (e) {} }
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
-    audio.playbackRate = slowAudio.checked ? 0.9 : 1.0;
+    audio.playbackRate = getPlaybackRate();
     currentAudio = audio;
     audio.onended = () => { if (currentAudio === audio) currentAudio = null; };
     audio.play();
@@ -502,7 +503,7 @@ replayBtn.onclick = () => {
   if (!lastAudioBlob) return;
   const url = URL.createObjectURL(lastAudioBlob);
   const audio = new Audio(url);
-  audio.playbackRate = slowAudio.checked ? 0.9 : 1.0;
+  audio.playbackRate = getPlaybackRate();
   audio.play();
 };
 
@@ -1086,7 +1087,7 @@ if (retryBtn) {
 // Register PWA service worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=10").catch(err => console.warn("SW register failed", err));
+    navigator.serviceWorker.register("./sw.js?v=11").catch(err => console.warn("SW register failed", err));
   });
 }
 
