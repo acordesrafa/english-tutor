@@ -1,6 +1,6 @@
 // Force-update: clear stale caches if version mismatch
 (function() {
-  const V = "v9";
+  const V = "v10";
   if (localStorage.getItem("app_version") !== V) {
     localStorage.setItem("app_version", V);
     if ("caches" in window) {
@@ -254,6 +254,11 @@ let recordedSamples = [];
 let isRecording = false;
 let lastAudioBlob = null;
 let lastAudioText = null;
+let currentAudio = null;
+function stopAudio() {
+  if (isGroqMode()) { if (window.speechSynthesis) speechSynthesis.cancel(); }
+  else if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+}
 
 function addMsg(role, text) {
   const div = document.createElement("div");
@@ -405,9 +410,12 @@ async function speak(text) {
     const blob = await r.blob();
     lastAudioBlob = blob;
     replayBtn.disabled = false;
+    if (currentAudio) { try { currentAudio.pause(); } catch (e) {} }
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
     audio.playbackRate = slowAudio.checked ? 0.9 : 1.0;
+    currentAudio = audio;
+    audio.onended = () => { if (currentAudio === audio) currentAudio = null; };
     audio.play();
   } catch (e) {
     console.warn("TTS error:", e);
@@ -519,6 +527,7 @@ const checkBtn = document.getElementById("checkBtn");
 const exerciseFeedback = document.getElementById("exerciseFeedback");
 
 async function newExercise() {
+  stopAudio();
   exerciseFeedback.textContent = "Generando ejercicio (cargando modelo si es la primera vez)...";
   exerciseQuestion.textContent = "Generando ejercicio...";
   exerciseText.style.display = "none";
@@ -597,6 +606,7 @@ const shadowStopBtn = document.getElementById("shadowStopBtn");
 const shadowingFeedback = document.getElementById("shadowingFeedback");
 
 async function newDictation() {
+  stopAudio();
   dictationFeedback.textContent = "Generando dictado (cargando modelo si es la primera vez)...";
   dictationInput.value = "";
   dictationBtn.disabled = true;
@@ -639,6 +649,7 @@ dictationBtn.onclick = newDictation;
 checkDictationBtn.onclick = checkDictation;
 
 async function newShadowing() {
+  stopAudio();
   shadowingFeedback.textContent = "Generando ejercicio (cargando modelo si es la primera vez)...";
   shadowingText.style.display = "none";
   shadowingBtn.disabled = true;
@@ -920,6 +931,7 @@ shadowStopBtn.onclick = async function() {
 };
 const personalizedBtn = document.getElementById("personalizedBtn");
 personalizedBtn.onclick = async () => {
+  stopAudio();
   exerciseFeedback.textContent = "Generando práctica personalizada (cargando modelo)...";
   exerciseQuestion.textContent = "Generando práctica personalizada...";
   exerciseText.style.display = "none";
@@ -958,6 +970,7 @@ const fillblankFeedback = document.getElementById("fillblankFeedback");
 fillblankInput.addEventListener("keydown", e => { if (e.key === "Enter") checkFillblank(); });
 
 async function newFillblank() {
+  stopAudio();
   fillblankFeedback.textContent = "Generando ejercicio (cargando modelo)...";
   fillblankInput.value = "";
   try {
@@ -1073,7 +1086,7 @@ if (retryBtn) {
 // Register PWA service worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=9").catch(err => console.warn("SW register failed", err));
+    navigator.serviceWorker.register("./sw.js?v=10").catch(err => console.warn("SW register failed", err));
   });
 }
 
