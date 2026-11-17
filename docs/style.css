@@ -13,7 +13,7 @@ body {
 .status { font-size: 12px; color: #94a3b8; }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; min-height: 0; }
-.panel { background: #111827; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; overflow-x: hidden; }
+.conv-panel { overflow: hidden; }
 .panel h2 { font-size: 15px; color: #60a5fa; border-bottom: 1px solid #1f2937; padding-bottom: 4px; }
 
 .chat { background: #0f172a; border-radius: 6px; padding: 8px; flex: 1; min-height: 0; overflow-y: auto; font-size: 13px; }
