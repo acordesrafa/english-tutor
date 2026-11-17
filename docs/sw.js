@@ -1,4 +1,4 @@
-const CACHE = "english-tutor-v5";
+const CACHE = "english-tutor-v6";
 const ASSETS = ["/", "/index.html", "/style.css", "/app.js", "/manifest.json"];
 
 self.addEventListener("install", e => {

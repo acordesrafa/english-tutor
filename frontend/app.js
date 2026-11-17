@@ -1,6 +1,6 @@
 // Force-update: clear stale caches if version mismatch
 (function() {
-  const V = "v5";
+  const V = "v6";
   if (localStorage.getItem("app_version") !== V) {
     localStorage.setItem("app_version", V);
     if ("caches" in window) {
@@ -1071,7 +1071,7 @@ if (retryBtn) {
 // Register PWA service worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=5").catch(err => console.warn("SW register failed", err));
+    navigator.serviceWorker.register("./sw.js?v=6").catch(err => console.warn("SW register failed", err));
   });
 }
 

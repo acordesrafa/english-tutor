@@ -28,7 +28,7 @@ body {
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .select { padding: 6px; border-radius: 6px; background: #0f172a; color: #e2e8f0; border: 1px solid #374151; font-size: 12px; }
 
-.text-input, .exercise-answer { display: flex; gap: 6px; }
+.row input { flex: 1 1 100%; min-width: 0; padding: 6px 8px; border-radius: 6px; border: 1px solid #374151; background: #0f172a; color: #e2e8f0; font-size: 12px; }
 .text-input input, .exercise-answer input { flex: 1; padding: 6px 8px; border-radius: 6px; border: 1px solid #374151; background: #0f172a; color: #e2e8f0; font-size: 12px; }
 
 .options, .settings { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: #94a3b8; }
