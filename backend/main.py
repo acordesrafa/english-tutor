@@ -54,7 +54,12 @@ def health():
     }
 
 
-@app.post("/warmup")
+@app.get("/v1/models")
+def list_models():
+    return {
+        "object": "list",
+        "data": [{"id": llm.MODEL, "object": "model", "owned_by": "local"}],
+    }
 async def warmup_endpoint():
     try:
         llm.chat_raw("Hello")
