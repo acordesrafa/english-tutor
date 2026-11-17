@@ -1,6 +1,6 @@
 // Force-update: clear stale caches if version mismatch
 (function() {
-  const V = "v8";
+  const V = "v9";
   if (localStorage.getItem("app_version") !== V) {
     localStorage.setItem("app_version", V);
     if ("caches" in window) {
@@ -520,6 +520,7 @@ const exerciseFeedback = document.getElementById("exerciseFeedback");
 
 async function newExercise() {
   exerciseFeedback.textContent = "Generando ejercicio (cargando modelo si es la primera vez)...";
+  exerciseQuestion.textContent = "Generando ejercicio...";
   exerciseText.style.display = "none";
   exerciseText.textContent = "";
   answerInput.value = "";
@@ -920,6 +921,7 @@ shadowStopBtn.onclick = async function() {
 const personalizedBtn = document.getElementById("personalizedBtn");
 personalizedBtn.onclick = async () => {
   exerciseFeedback.textContent = "Generando práctica personalizada (cargando modelo)...";
+  exerciseQuestion.textContent = "Generando práctica personalizada...";
   exerciseText.style.display = "none";
   exerciseText.textContent = "";
   try {
@@ -937,11 +939,11 @@ personalizedBtn.onclick = async () => {
     const audioOnly = document.getElementById("audioOnly").checked;
     if (audioOnly) {
       exerciseQuestion.textContent = "Pregunta (audio): escucha y responde.";
-      await speak(d.question);
+      await speak(d.question + ". " + d.text);
     } else {
       exerciseQuestion.textContent = "Pregunta: " + d.question;
+      await speak(d.text);
     }
-    await speak(d.text);
     replayExerciseBtn.disabled = false;
   } catch (e) {
     exerciseQuestion.textContent = "Error: " + e.message;
@@ -1071,7 +1073,7 @@ if (retryBtn) {
 // Register PWA service worker
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=8").catch(err => console.warn("SW register failed", err));
+    navigator.serviceWorker.register("./sw.js?v=9").catch(err => console.warn("SW register failed", err));
   });
 }
 
